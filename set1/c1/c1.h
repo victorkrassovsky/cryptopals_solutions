@@ -1,6 +1,9 @@
 #include <iostream>
 
-struct byte_array;
+struct byte_array{
+  int* bytes;
+  int size;
+};
 
 byte_array hex_to_bytes(char*);
 
