@@ -20,4 +20,9 @@ def xor_hex_strings(h1, h2):
 def single_byte_xor(hex_string):
     b = bytes.fromhex(hex_string)
     for i in range(256):
+        decrypted_bytes = b''.join([(i^x).to_bytes(1,'big') for x in b])
+        if(all([(x > 32 and x < 127) for x in decrypted_bytes])):
+           return (i, decrypted_bytes.decode('utf-8'))
+    return (-1, 'RIP')
         
+#c4
