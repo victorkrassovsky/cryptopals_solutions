@@ -67,6 +67,16 @@ def single_byte_xor(hex_string):
             and best_score < score(decrypted_bytes.decode('utf-8'))):
             best_score = score(decrypted_bytes.decode('utf-8'))
             best_i = i
-    return (best_i, b''.join([(best_i^x).to_bytes(1,'big') for x in b]))
+    return (best_score, b''.join([(best_i^x).to_bytes(1,'big') for x in b]))
             
 #c4
+
+def c4(file_name):
+    f = open(file_name, 'r')
+    best_score,best_line = single_byte_xor(f.readline())
+    for line in f:
+        curr_score,curr_line = single_byte_xor(line)
+        if(curr_score > best_score):
+            best_score = curr_score
+            best_line = curr_line
+    return (best_score,best_line)
