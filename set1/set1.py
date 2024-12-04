@@ -145,15 +145,17 @@ def solve_repeating_key_xor(byte_file):
     key_size, dist = -1, 10000
     for candidate in range(2, 40):
         new_dist = hamming_distance(byte_file[:candidate], byte_file[candidate:2*candidate])/candidate
-        key_size,dist = ks_candidate, new_dist if new_dist < dist else key_size, dist
+        key_size,dist = (candidate, new_dist) if new_dist < dist else (key_size, dist)
+    blocks = [byte_file[i:i+key_size] for i in range(0, len(byte_file), key_size)][:-1]
+    blocks_transposed = [[blocks[i][j] for i in range(len(blocks))] for j in range(len(blocks[0]))]
+    return blocks_transposed
     # TODO:
-    # break into blocks
-    # transpose the blocks
     # solve each new block seperately
     # transpose back
     
 def c6():
-    byte_file = b''
     with open("c6_text.txt", 'r') as f:
-        byte_lines = b''.join([base64.b64decode(l.strip()) for l in f])
-    return solve_repeating_key_xor(byte_lines)
+        byte_file = b''.join([base64.b64decode(l.strip()) for l in f])
+    return solve_repeating_key_xor(byte_file)
+
+c6()
