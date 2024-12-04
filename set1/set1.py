@@ -125,7 +125,35 @@ def c4(file_name):
     return (best_score,best_line)
 
 #c5
-# encrypts a hex string by xoring it with a multi-byte key
-def repeating_key_xor(key, hex_string):
-    b = bytes.fromhex(hex_string)
+# encrypts a byte string by xoring it with a multi-byte key
+def repeating_key_xor(key, byte_string):
+    return b''.join([(byte_string[i] ^ key[i%len(key)]).to_bytes(1, 'big')  for i in range(len(byte_string))])
+
+def c5():
+    pt = b'Burning \'em, if you ain\'t quick and nimble\nI go crazy when I hear a cymbal'
+    ct = "0b3637272a2b2e63622c2e69692a23693a2a3c6324202d623d63343c2a26226324272765272a282b2f20430a652e2c652a3124333a653e2b2027630c692b20283165286326302e27282f"
+    output = repeating_key_xor(b'ICE', pt).hex()
+    return ct == output
+
+# computes the hamming distance between words
+def hamming_distance(b1, b2):
+    xored = xor_bytes(b1,b2)
+    return sum([bin(x).count('1') for x in xored])
+
+# accepts a file of bytes encrypted using repeating_key_xor and recovers the key used to encrypt
+def solve_repeating_key_xor(byte_file):
+    key_size, dist = -1, 10000
+    for candidate in range(2, 40):
+        new_dist = hamming_distance(byte_file[:candidate], byte_file[candidate:2*candidate])/candidate
+        key_size,dist = ks_candidate, new_dist if new_dist < dist else key_size, dist
+    # TODO:
+    # break into blocks
+    # transpose the blocks
+    # solve each new block seperately
+    # transpose back
     
+def c6():
+    byte_file = b''
+    with open("c6_text.txt", 'r') as f:
+        byte_lines = b''.join([base64.b64decode(l.strip()) for l in f])
+    return solve_repeating_key_xor(byte_lines)
