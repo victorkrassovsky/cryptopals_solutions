@@ -95,11 +95,10 @@ def xor_bytes(b1, b2):
 def xor_single_byte(single, b):
     return xor_bytes(single*len(b), b)
 
-# accepts a hex string that has been xored against a single byte, returns score and the original string
-def solve_single_byte_xor(hex_string):
-    b = bytes.fromhex(hex_string)
-    best_score = 0;
-    best_i = 0;
+# accepts a byte string that has been xored against a single byte, returns score and the original string
+def solve_single_byte_xor(b):
+    best_score = 0
+    best_i = 0
     for i in range(256):
         curr_string = xor_single_byte(i.to_bytes(), b)
         if not all([x <= 127 for x in curr_string]):
@@ -107,8 +106,13 @@ def solve_single_byte_xor(hex_string):
         curr_score = score(curr_string.decode('utf-8'))
         if(best_score < curr_score):
             best_score, best_i = curr_score, i
-    return (best_score, xor_single_byte(best_i.to_bytes(), b))
-            
+    return (best_score, xor_single_byte(best_i.to_bytes(), b), best_i.to_bytes())
+
+def c3():
+    hex_string = "1b37373331363f78151b7f2b783431333d78397828372d363c78373e783a393b3736"
+    b = bytes.fromhex(hex_string)
+    return solve_single_byte_xor(b)
+
 #c4
 
 def c4(file_name):
@@ -118,7 +122,7 @@ def c4(file_name):
     (best_score,best_line) = (-1, b'')
     i = 0
     for line in lines:
-        curr_score,curr_line = solve_single_byte_xor(line)
+        curr_score,curr_line,_ = solve_single_byte_xor(line)
         if(curr_score > best_score):
             best_score = curr_score
             best_line = curr_line
@@ -142,13 +146,25 @@ def hamming_distance(b1, b2):
 
 # accepts a file of bytes encrypted using repeating_key_xor and recovers the key used to encrypt
 def solve_repeating_key_xor(byte_file):
-    key_size, dist = -1, 10000
+    key_sizes = []
     for candidate in range(2, 40):
-        new_dist = hamming_distance(byte_file[:candidate], byte_file[candidate:2*candidate])/candidate
-        key_size,dist = (candidate, new_dist) if new_dist < dist else (key_size, dist)
-    blocks = [byte_file[i:i+key_size] for i in range(0, len(byte_file), key_size)][:-1]
-    blocks_transposed = [[blocks[i][j] for i in range(len(blocks))] for j in range(len(blocks[0]))]
-    return blocks_transposed
+        dist = hamming_distance(byte_file[:candidate], byte_file[candidate:2*candidate])/candidate
+        key_sizes.append((candidate, dist))
+    key_sizes.sort(reverse=True, key=lambda a : a[1])
+    results = []
+    for (key_size,_) in key_sizes:
+        blocks = [byte_file[i:i+key_size] for i in range(0, len(byte_file), key_size)][:-1]
+        blocks_transposed = [[blocks[i][j] for i in range(len(blocks))] for j in range(len(blocks[0]))]
+        result = b''
+        total_score = 0
+        for b in blocks_transposed:
+            score,pt_block, key = solve_single_byte_xor(b''.join([x.to_bytes(1, 'big') for x in b]))
+            total_score += score
+            result += key
+        results.append((result, total_score))
+    results.sort(reverse=True, key=lambda a: a[1])
+    return results[0]
+        
     # TODO:
     # solve each new block seperately
     # transpose back
@@ -156,6 +172,8 @@ def solve_repeating_key_xor(byte_file):
 def c6():
     with open("c6_text.txt", 'r') as f:
         byte_file = b''.join([base64.b64decode(l.strip()) for l in f])
-    return solve_repeating_key_xor(byte_file)
+    key,_ = solve_repeating_key_xor(byte_file)
+    
+    return repeating_key_xor(key, byte_file), key
 
-c6()
+
