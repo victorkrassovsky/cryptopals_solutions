@@ -1,4 +1,5 @@
 import base64
+import aes128 as aes
 
 #c1
 # converts a hex string to a base 64 string in big endian
@@ -139,6 +140,8 @@ def c5():
     output = repeating_key_xor(b'ICE', pt).hex()
     return ct == output
 
+
+#c6
 # computes the hamming distance between words
 def hamming_distance(b1, b2):
     xored = xor_bytes(b1,b2)
@@ -176,4 +179,14 @@ def c6():
     
     return repeating_key_xor(key, byte_file), key
 
+#c7
+def c7():
+    with open("c7_text.txt", 'r') as f:
+        byte_file = b''.join([base64.b64decode(l.strip()) for l in f]);
+    result = b''
+    key = b'YELLOW SUBMARINE'
+    for word in [byte_file[i:i+16] for i in range(0, len(byte_file), 16)]:
+        result += aes.decrypt(word, key)
+    return c7
+    
 
