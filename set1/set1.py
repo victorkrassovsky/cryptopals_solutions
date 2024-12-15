@@ -116,8 +116,8 @@ def c3():
 
 #c4
 
-def c4(file_name):
-    lines = []
+def c4():
+    file_name = 'c4.txt'
     with open(file_name, 'r') as f:
         lines = [l.strip() for l in f]
     (best_score,best_line) = (-1, b'')
@@ -169,7 +169,7 @@ def solve_repeating_key_xor(byte_file):
     return results[0]
     
 def c6():
-    with open("c6_text.txt", 'r') as f:
+    with open('c6.txt', 'r') as f:
         byte_file = b''.join([base64.b64decode(l.strip()) for l in f])
     key,_ = solve_repeating_key_xor(byte_file)
     
@@ -177,7 +177,7 @@ def c6():
 
 #c7
 def c7():
-    with open("c7_text.txt", 'r') as f:
+    with open("c7.txt", 'r') as f:
         byte_file = b''.join([base64.b64decode(l.strip()) for l in f]);
     result = b''
     key = b'YELLOW SUBMARINE'
