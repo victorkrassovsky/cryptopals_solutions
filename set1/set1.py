@@ -167,10 +167,6 @@ def solve_repeating_key_xor(byte_file):
         results.append((result, total_score))
     results.sort(reverse=True, key=lambda a: a[1])
     return results[0]
-        
-    # TODO:
-    # solve each new block seperately
-    # transpose back
     
 def c6():
     with open("c6_text.txt", 'r') as f:
@@ -188,5 +184,20 @@ def c7():
     for word in [byte_file[i:i+16] for i in range(0, len(byte_file), 16)]:
         result += aes.decrypt(word, key)
     return c7
-    
 
+#takes a byte file and determines if it was encrypted with aes ecb mode
+def isAESEncrypted(byte_file):
+    if len(byte_file) % 16 != 0:
+        return False
+    words = [byte_file[i:i+16] for i in range(0,len(byte_file), 16)]
+    if len(set(words)) < len(words):
+        return True
+    return False
+    
+def c8():
+    with open('c8.txt', 'r') as f:
+        byte_file = [bytes.fromhex(l.strip()) for l in f]
+    for (i,bf) in zip(range(len(byte_file)),byte_file):
+        if isAESEncrypted(bf):
+            return bf, i
+        
