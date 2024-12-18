@@ -51,7 +51,6 @@ def ecb_aes_decrypt(ct, key):
 # encrypts a file randomly with ecb mode or cbc mode
 def encryption_oracle(input_bytes):
     pt = bytes(random.randint(5,10)) + input_bytes + bytes(random.randint(5,10))
-    print(type(pt))
     if random.randint(1,2) == 1:
         return ("ecb",ecb_aes_encrypt(pt, random_key()))
     else:
@@ -67,12 +66,13 @@ def isECBEncrypted(byte_file):
     return False
 
 def c11():
-    pt = bytes(60)
+    pt = (b'A')*60
     s, ct = encryption_oracle(pt)
     if (s != 'ecb') != isECBEncrypted(ct):
+        print(s)
         print("success!")
     else:
-        print("failure")
-    
-# todo:
-# fix cbc part
+        print(s)
+        print(ct)
+
+
