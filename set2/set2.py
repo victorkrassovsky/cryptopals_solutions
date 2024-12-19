@@ -76,3 +76,30 @@ def c11():
         print(ct)
 
 
+# has a secret key and an unknown string to be recovered
+# returns ecb(pt + unknown_str, key)
+def c12oracle(pt):
+    key = b'\x0e7\xb1\xba\xdf\xcb\x1a\x0cR\xb2/\xee\xaf0\x9c\x86'
+    unknown_str = base64.b64decode("Um9sbGluJyBpbiBteSA1LjAKV2l0aCBteSByYWctdG9wIGRvd24gc28gbXkgaGFpciBjYW4gYmxvdwpUaGUgZ2lybGllcyBvbiBzdGFuZGJ5IHdhdmluZyBqdXN0IHRvIHNheSBoaQpEaWQgeW91IHN0b3A/IE5vLCBJIGp1c3QgZHJvdmUgYnkK")
+    return ecb_aes_encrypt(pt + unknown_str, key)
+
+def c12():
+    # recover the blocklength:
+    s1 = len(c12oracle(bytes(1)))
+    s2 = len(c12oracle(bytes(2)))
+    for i in range(3,255):
+        if s1 < s2:
+            j=i-1
+            break
+        s1 = s2
+        s2 = len(c12oracle(bytes(i)))
+    blocklength = s2 - s1
+    length = s1 - j
+    return length
+    # confirm that it is using ecb mode
+    if not isECBEncrypted(c12oracle(bytes(blocklength*3))):
+        raise Exception("not ecb encrypted")
+    # recover each byte at a time
+    buff = bytearray(blocklength - 1)
+    for _ in range(length):
+        
