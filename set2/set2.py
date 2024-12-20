@@ -3,6 +3,7 @@ import aes128 as aes
 import cbc
 import os
 import random
+import re
 
 # pads a byte file to a desired length using pkcs#7 
 def pad_file(byte_file, blocklength=16):
@@ -113,3 +114,29 @@ def c12():
                 result[i+blocklength-1] = j
                 break
     return result[blocklength-1:]
+
+# parses the query parameter of a url and makes it a dict
+def parseURL(s):
+    return dict(re.findall("(\w+)=(\w+)", s))
+
+# converts a dict to a query parameter of a url
+def toURL(d):
+    return ''.join([k + "=" + v + "&" for k,v in d.items()])[:-1]
+
+# makes a query string out of an email
+def profile_for(email):
+    email = email.replace('&', '')
+    email = email.replace('=', '')
+    email_text = re.search("\w+@\w+.com", email).string
+    return {"email":email_text, "role":"user"}
+
+# encrypts user profile in query form under a secret key
+def encrypt_user_profile(pt):
+    key = b'{\x90\xe6~,\x19\xd3bO\x95\x9d(\xb4\xf8\xf1\x11'
+    return ecb_aes_encrypt(pt, key)
+
+# decrypts user profile under a secret key
+def decrypt_user_profile(ct):
+    key = b'{\x90\xe6~,\x19\xd3bO\x95\x9d(\xb4\xf8\xf1\x11'
+    ecb_aes_encrypt(ct, key)
+    
