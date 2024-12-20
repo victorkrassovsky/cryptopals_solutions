@@ -77,8 +77,11 @@ def c11():
 
 
 # has a secret key and an unknown string to be recovered
+# key was randomly generated
 # returns ecb(pt + unknown_str, key)
 def c12oracle(pt):
+    if type(pt) != bytes:
+        raise Exception("Not bytes")
     key = b'\x0e7\xb1\xba\xdf\xcb\x1a\x0cR\xb2/\xee\xaf0\x9c\x86'
     unknown_str = base64.b64decode("Um9sbGluJyBpbiBteSA1LjAKV2l0aCBteSByYWctdG9wIGRvd24gc28gbXkgaGFpciBjYW4gYmxvdwpUaGUgZ2lybGllcyBvbiBzdGFuZGJ5IHdhdmluZyBqdXN0IHRvIHNheSBoaQpEaWQgeW91IHN0b3A/IE5vLCBJIGp1c3QgZHJvdmUgYnkK")
     return ecb_aes_encrypt(pt + unknown_str, key)
@@ -95,11 +98,18 @@ def c12():
         s2 = len(c12oracle(bytes(i)))
     blocklength = s2 - s1
     length = s1 - j
-    return length
     # confirm that it is using ecb mode
     if not isECBEncrypted(c12oracle(bytes(blocklength*3))):
         raise Exception("not ecb encrypted")
     # recover each byte at a time
-    buff = bytearray(blocklength - 1)
-    for _ in range(length):
-        
+    # WILL TAKE A LONG TIME
+    result = bytearray(length + blocklength - 1)
+    for i in range(0,length):
+        indent = (blocklength-1-i) % blocklength
+        slide = (i//blocklength)*blocklength
+        target = c12oracle(bytes(indent))[slide : slide + blocklength]
+        for j in range(0,255):
+            if target == c12oracle(bytes(result[i:i+blocklength-1]) + j.to_bytes(1,'big'))[:blocklength]:
+                result[i+blocklength-1] = j
+                break
+    return result[blocklength-1:]
