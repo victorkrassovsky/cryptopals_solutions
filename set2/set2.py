@@ -9,6 +9,8 @@ import re
 def pad_file(byte_file, blocklength=16):
     if blocklength > 255:
         raise Exception("Blocklength too large")
+    if type(byte_file) != bytes:
+        raise Exception("Not bytes")
     if len(byte_file) % blocklength == 0:
         return byte_file + blocklength*blocklength.to_bytes(1,'big')
     pad = blocklength - len(byte_file) % blocklength
@@ -18,6 +20,7 @@ def pad_file(byte_file, blocklength=16):
 def strip_pad(byte_file):
     pad = byte_file[-1]
     if byte_file[-pad:] != pad*pad.to_bytes(1,'big'):
+        print(byte_file)
         raise Exception("Invalid padding")
     return byte_file[:-pad]
 
@@ -44,9 +47,9 @@ def ecb_aes_encrypt(pt, key):
     return b''.join([aes.encrypt(b, key) for b in blocks])
 
 # decrypts a file encrypted with aes with ecb mode
-def ecb_aes_decrypt(ct, key):
+def ecb_aes_decrypt(ct, key, padded=True):
     blocksize = 16
-    blocks = [ct[i:i+blocksize] for i in range(0,len(padded_pt), blocksize)]
+    blocks = [ct[i:i+blocksize] for i in range(0,len(ct), blocksize)]
     return strip_pad(b''.join([aes.decrypt(b, key) for b in blocks]))
 
 # encrypts a file randomly with ecb mode or cbc mode
@@ -116,27 +119,41 @@ def c12():
     return result[blocklength-1:]
 
 # parses the query parameter of a url and makes it a dict
-def parseURL(s):
-    return dict(re.findall("(\w+)=(\w+)", s))
+def parse_query(s):
+    s_split = s.split('&')
+    pairs = [pair.split("=") for pair in s_split]
+    return dict(pairs)
 
 # converts a dict to a query parameter of a url
-def toURL(d):
+def to_query(d):
     return ''.join([k + "=" + v + "&" for k,v in d.items()])[:-1]
 
 # makes a query string out of an email
 def profile_for(email):
     email = email.replace('&', '')
     email = email.replace('=', '')
-    email_text = re.search("\w+@\w+.com", email).string
-    return {"email":email_text, "role":"user"}
+    email_text = re.search(".+@.+\.com", email).string
+    return {"email":email_text, "uid" : "10", "role":"user"}
 
 # encrypts user profile in query form under a secret key
-def encrypt_user_profile(pt):
+# accepts a normal string
+def encrypt_user_profile(p):
     key = b'{\x90\xe6~,\x19\xd3bO\x95\x9d(\xb4\xf8\xf1\x11'
-    return ecb_aes_encrypt(pt, key)
+    return ecb_aes_encrypt(bytes(p,'utf-8'), key)
 
 # decrypts user profile under a secret key
+# accepts a bytes strig
 def decrypt_user_profile(ct):
     key = b'{\x90\xe6~,\x19\xd3bO\x95\x9d(\xb4\xf8\xf1\x11'
-    ecb_aes_encrypt(ct, key)
-    
+    return parse_query(str(ecb_aes_decrypt(ct, key), 'utf-8'))
+
+# this is the byte file the attacker has access to
+def makeProfile(email):
+    return encrypt_user_profile(to_query(profile_for(email)))
+
+# procudes a valid admin profile
+def c13():
+    e1 = "1234@5678.com"
+    e2 = 'A'*10 + "admin" + '\x0b'*11 + '@holyhell.com'
+    result = makeProfile(e1)[:-16] + makeProfile(e2)[16:32]
+    return decrypt_user_profile(result)
