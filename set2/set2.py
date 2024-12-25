@@ -157,3 +157,27 @@ def c13():
     e2 = 'A'*10 + "admin" + '\x0b'*11 + '@holyhell.com'
     result = makeProfile(e1)[:-16] + makeProfile(e2)[16:32]
     return decrypt_user_profile(result)
+
+# accepts a byte file and encrypts under ecb mode with some appendages
+# returns ecb(set-random-prefix || input || target, set-random-key)
+def c14oracle(byte_file):
+    key = b'\x8c\xfc\x00<M\xff7\x88\x91\xe2\x0b\xf6\xcf\x08?w'
+    prefix = b'.\x1f\x88Y\xbf\xea\xf2'
+    # same as in c12
+    target = base64.b64decode("Um9sbGluJyBpbiBteSA1LjAKV2l0aCBteSByYWctdG9wIGRvd24gc28gbXkgaGFpciBjYW4gYmxvdwpUaGUgZ2lybGllcyBvbiBzdGFuZGJ5IHdhdmluZyBqdXN0IHRvIHNheSBoaQpEaWQgeW91IHN0b3A/IE5vLCBJIGp1c3QgZHJvdmUgYnkK")
+    return ecb_aes_encrypt(prefix+byte_file+target, key)
+
+
+def c14():
+    # TODO:
+    # determine blocklength
+    least_length = len(c14oracle(b''))
+    for i in range(1, 30):
+        cur_length = len(c14oracle(bytes(i)))
+        if cur_length > least_length:
+            blocklength = cur_length - least_length
+            break
+    
+    # find number of bytes in prefix
+    # find number of bytes in target
+    # decrypt one byte at a time
