@@ -167,17 +167,31 @@ def c14oracle(byte_file):
     target = base64.b64decode("Um9sbGluJyBpbiBteSA1LjAKV2l0aCBteSByYWctdG9wIGRvd24gc28gbXkgaGFpciBjYW4gYmxvdwpUaGUgZ2lybGllcyBvbiBzdGFuZGJ5IHdhdmluZyBqdXN0IHRvIHNheSBoaQpEaWQgeW91IHN0b3A/IE5vLCBJIGp1c3QgZHJvdmUgYnkK")
     return ecb_aes_encrypt(prefix+byte_file+target, key)
 
-
+# finds the target hidden in the oracle
 def c14():
-    # TODO:
     # determine blocklength
     least_length = len(c14oracle(b''))
-    for i in range(1, 30):
+    for i in range(1, 32):
         cur_length = len(c14oracle(bytes(i)))
         if cur_length > least_length:
             blocklength = cur_length - least_length
+            pad = i
+            total_length = least_length - i
             break
-    
-    # find number of bytes in prefix
+    # confirm that ecb is used
+    padded_ct = c14oracle(bytes(blocklength*3))
+    if not isECBEncrypted(padded_ct):
+        raise Exception("Not ecb encrypted")
     # find number of bytes in target
+    # I am assuming that there are not two consecutive identical blocks in the prefix
+    padded_ct_blocks = [padded_ct[i:i+blocklength] for i in range(0, len(padded_ct), 16)]
+    for i,x in enumerate(padded_ct_blocks[:-1]):
+        if x == padded_ct_blocks[i+1]:
+            # find target length
+            break
+    # find number of bytes in prefix
     # decrypt one byte at a time
+
+
+
+    
