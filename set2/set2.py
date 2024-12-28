@@ -80,15 +80,15 @@ def c11():
         print(ct)
 
 
-# has a secret key and an unknown string to be recovered
+# has a secret key and an target string to be recovered
 # key was randomly generated
-# returns ecb(pt + unknown_str, key)
+# returns ecb(pt + target, key)
 def c12oracle(pt):
     if type(pt) != bytes:
         raise Exception("Not bytes")
     key = b'\x0e7\xb1\xba\xdf\xcb\x1a\x0cR\xb2/\xee\xaf0\x9c\x86'
-    unknown_str = base64.b64decode("Um9sbGluJyBpbiBteSA1LjAKV2l0aCBteSByYWctdG9wIGRvd24gc28gbXkgaGFpciBjYW4gYmxvdwpUaGUgZ2lybGllcyBvbiBzdGFuZGJ5IHdhdmluZyBqdXN0IHRvIHNheSBoaQpEaWQgeW91IHN0b3A/IE5vLCBJIGp1c3QgZHJvdmUgYnkK")
-    return ecb_aes_encrypt(pt + unknown_str, key)
+    target = base64.b64decode("Um9sbGluJyBpbiBteSA1LjAKV2l0aCBteSByYWctdG9wIGRvd24gc28gbXkgaGFpciBjYW4gYmxvdwpUaGUgZ2lybGllcyBvbiBzdGFuZGJ5IHdhdmluZyBqdXN0IHRvIHNheSBoaQpEaWQgeW91IHN0b3A/IE5vLCBJIGp1c3QgZHJvdmUgYnkK")
+    return ecb_aes_encrypt(pt + target, key)
 
 def c12():
     # recover the blocklength:
@@ -105,7 +105,7 @@ def c12():
     # confirm that it is using ecb mode
     if not isECBEncrypted(c12oracle(bytes(blocklength*3))):
         raise Exception("not ecb encrypted")
-    # recover each byte at a time
+    # recover each byte one at a time
     # WILL TAKE A LONG TIME
     result = bytearray(length + blocklength - 1)
     for i in range(0,length):
@@ -162,7 +162,7 @@ def c13():
 # returns ecb(set-random-prefix || input || target, set-random-key)
 def c14oracle(byte_file):
     key = b'\x8c\xfc\x00<M\xff7\x88\x91\xe2\x0b\xf6\xcf\x08?w'
-    prefix = b'.\x1f\x88Y\xbf\xea\xf2'
+    prefix = b'.\x1f\x88Y\xbf\xea\xf2\x33\x45\xb4'
     # same as in c12
     target = base64.b64decode("Um9sbGluJyBpbiBteSA1LjAKV2l0aCBteSByYWctdG9wIGRvd24gc28gbXkgaGFpciBjYW4gYmxvdwpUaGUgZ2lybGllcyBvbiBzdGFuZGJ5IHdhdmluZyBqdXN0IHRvIHNheSBoaQpEaWQgeW91IHN0b3A/IE5vLCBJIGp1c3QgZHJvdmUgYnkK")
     return ecb_aes_encrypt(prefix+byte_file+target, key)
@@ -178,20 +178,45 @@ def c14():
             pad = i
             total_length = least_length - i
             break
+        
     # confirm that ecb is used
     padded_ct = c14oracle(bytes(blocklength*3))
     if not isECBEncrypted(padded_ct):
         raise Exception("Not ecb encrypted")
-    # find number of bytes in target
-    # I am assuming that there are not two consecutive identical blocks in the prefix
-    padded_ct_blocks = [padded_ct[i:i+blocklength] for i in range(0, len(padded_ct), 16)]
+    if len(padded_ct) % blocklength != 0:
+        raise Exception("ciphertext has wrong size")
+    
+    # find number of bytes in target/prefix
+    padded_ct_blocks = [padded_ct[i:i+blocklength] for i in range(0,len(padded_ct), 16)]
     for i,x in enumerate(padded_ct_blocks[:-1]):
         if x == padded_ct_blocks[i+1]:
-            # find target length
+            zeros_ct = x
+
+    for prefix_pad in range(0,blocklength):
+        temp_ct = c14oracle(bytes(prefix_pad + blocklength))
+        if zeros_ct in temp_ct:
+            prefix_offset = temp_ct.find(zeros_ct)
             break
-    # find number of bytes in prefix
-    # decrypt one byte at a time
-
-
-
+    target_pad = pad - prefix_pad
+    prefix_length = prefix_offset - prefix_pad
+    target_length = total_length - prefix_length
     
+    # recover each byte one at a time
+    # WILL TAKE A LONG TIME
+    result = bytearray(target_length + blocklength - 1)
+    for i in range(target_length):
+        indent = (blocklength-1-i) % blocklength
+        slide = prefix_offset + (i//blocklength)*blocklength
+        target_ct = c14oracle(bytes(prefix_pad + indent))[slide:slide+blocklength]
+        print(i)
+        for j in range(0,255):
+            candidate_byte = j.to_bytes(1,'big')
+            candidate_pt = bytes(prefix_pad) + bytes(result[i:i+blocklength-1]) + candidate_byte
+            candidate_ct = c14oracle(candidate_pt)[prefix_offset:prefix_offset+blocklength]
+            if candidate_ct == target_ct:
+                result[i+blocklength-1] = j
+                print(j.to_bytes(1,'big'))
+                break
+            
+    return result[blocklength-1:]
+            
