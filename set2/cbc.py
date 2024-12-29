@@ -20,7 +20,7 @@ def aes_128_cbc_encrypt(pt, key, iv=os.urandom(16)):
         ct_array[i] = aes128.encrypt(xor_strings(ct_array[i-1],pt_array[i]),key)
     return b''.join(ct_array)
 
-#takes a string of bytes returned from the encrypt function and returns the corresponding plaintext as a string
+#takes a string of bytes returned from the encrypt function and returns the corresponding plaintext as a string of bytes
 def aes_128_cbc_decrypt(ciphertext, key):
     ct_array = [ciphertext[i:i+16] for i in range(0,len(ciphertext),16)]
     pt_array = [None]*(len(ct_array)-1)
@@ -28,5 +28,5 @@ def aes_128_cbc_decrypt(ciphertext, key):
         pt_array[i] = bytes(a^b for a,b in zip(aes128.decrypt(ct_array[i+1],key), ct_array[i]))
     pt = b''.join([bytearray(x) for x in np.array(pt_array).T.tolist()])
     pt = pt[:-pt[-1]]
-    return pt.decode('utf-8')
+    return pt
     

@@ -234,7 +234,37 @@ def c15():
     try:
         assert(strip_pad(b'asdf' + bytes(11) + (12).to_bytes(1,'big')) == b'asdf')
     except Exception:
-        print("test 3 suceeded")
+        print("test 3 succeeded")
     else:
         print("test 3 failed")
 
+# produces a user data string
+# takes bytes, removes metacharacters, prepends and appends some stuff
+# then encrypts using cbc
+def process_input(byte_file):
+    key = b'.\xbf\xfd\x0b\x18\x08o8z6\xbb\xad\x1d\xed\xd2\xb6'
+    pt = byte_file.replace(b';',b'').replace(b'=',b'')
+    prepend = b'comment1=cooking%20MCs;userdata='
+    append = b';comment2=%20like%20a%20pound%20of%20bacon'
+    complete_pt = prepend + pt + append
+    ct = cbc.aes_128_cbc_encrypt(complete_pt, key)
+    return ct
+
+# determines if user is admin
+# decrypts bytes and returns whether it contains a string
+def has_admin(byte_file):
+    key = b'.\xbf\xfd\x0b\x18\x08o8z6\xbb\xad\x1d\xed\xd2\xb6'
+    pt = cbc.aes_128_cbc_decrypt(byte_file, key)
+    if b';admin=true;' in pt:
+        return True
+    else:
+        return False
+
+# produces a valid admin user
+def c16():
+    # since length of prepend is a multiple of the blocklength, we can simply ignore it
+    ct = process_input(bytes(16))
+    key = b'.\xbf\xfd\x0b\x18\x08o8z6\xbb\xad\x1d\xed\xd2\xb6'
+    # TODO:
+    # Fix issue where zeroes are disappearing for some reason
+    return cbc.aes_128_cbc_decrypt(ct, key)
