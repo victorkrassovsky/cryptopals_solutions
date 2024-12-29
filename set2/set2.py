@@ -20,7 +20,6 @@ def pad_file(byte_file, blocklength=16):
 def strip_pad(byte_file):
     pad = byte_file[-1]
     if byte_file[-pad:] != pad*pad.to_bytes(1,'big'):
-        print(byte_file)
         raise Exception("Invalid padding")
     return byte_file[:-pad]
 
@@ -219,4 +218,23 @@ def c14():
                 break
             
     return result[blocklength-1:]
-            
+
+# tests the strip_pad function I wrote earlier
+def c15():
+    try:
+        assert(strip_pad(b'asdf' + (12).to_bytes(1,'big')*12) == b'asdf')
+        print("test 1 succeeded")
+    except AssertionError:
+        print("test 1 failed")
+    try:
+        assert(strip_pad(b'a'*16 + b'\x10'*16) == b'a'*16)
+        print("test 2 succeeded")
+    except AssertionError:
+        print("test 2 failed")
+    try:
+        assert(strip_pad(b'asdf' + bytes(11) + (12).to_bytes(1,'big')) == b'asdf')
+    except Exception:
+        print("test 3 suceeded")
+    else:
+        print("test 3 failed")
+
