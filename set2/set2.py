@@ -256,15 +256,27 @@ def has_admin(byte_file):
     key = b'.\xbf\xfd\x0b\x18\x08o8z6\xbb\xad\x1d\xed\xd2\xb6'
     pt = cbc.aes_128_cbc_decrypt(byte_file, key)
     if b';admin=true;' in pt:
-        return True
+        return True, pt
     else:
-        return False
+        return False,pt
 
+# xors two byte strings of possibly different lengths
+def xor_strings(a,b):
+    if len(a) < len(b):
+        return b''.join([(x^y).to_bytes(1,'big') for x,y in zip(a, b[:len(a)])])
+    else:
+        return b''.join([(x^y).to_bytes(1,'big') for x,y in zip(a[:len(b)], b)])
+    
 # produces a valid admin user
+# NOTE: could be cleaner since there are out of place metacharacters in the final plaintext,
+# and incorrectly formatted query parameters, but these can be fixed with some work
 def c16():
     # since length of prepend is a multiple of the blocklength, we can simply ignore it
-    ct = process_input(bytes(16))
+    ct = process_input(b'\x01' * 16)
     key = b'.\xbf\xfd\x0b\x18\x08o8z6\xbb\xad\x1d\xed\xd2\xb6'
-    # TODO:
-    # Fix issue where zeroes are disappearing for some reason
-    return cbc.aes_128_cbc_decrypt(ct, key)
+    ct_blocks = [ct[i:i+16] for i in range(0, len(ct), 16)]
+    index = 3 # index of the 1s block
+    transform = xor_strings(b';comment2=%20lik', b';admin=true;' + bytes(4))
+    ct_blocks[3] = xor_strings(transform, ct_blocks[3])
+    out = b''.join(ct_blocks)
+    return has_admin(out)
