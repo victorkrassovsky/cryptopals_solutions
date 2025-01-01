@@ -1,6 +1,5 @@
 import numpy as np
 
-
 SBOX_text = """63 7c 77 7b f2 6b 6f c5 30 01 67 2b fe d7 ab 76
 ca 82 c9 7d fa 59 47 f0 ad d4 a2 af 9c a4 72 c0
 b7 fd 93 26 36 3f f7 cc 34 a5 e5 f1 71 d8 31 15
