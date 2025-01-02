@@ -1,4 +1,5 @@
 import cbc
+import ctr
 import os
 import base64 as b64
 import random
@@ -71,3 +72,11 @@ def c17():
         #print(pt)
         result += bytes(pt)
     return result
+
+def c18():
+    ct_before_nonce = b64.b64decode('L77na/nrFsKvynd6HzOoG7GHTLXsTVu9qvY/2syLXzhPweyyMTJULu/6/kXX0KSvoOLSFQ==')
+    ct = bytes(16) + ct_before_nonce
+    key = b'YELLOW SUBMARINE'
+    pt = ctr.ctr_decrypt(ct, key, endian='little')
+    return pt
+
