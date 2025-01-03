@@ -73,6 +73,7 @@ def c17():
         result += bytes(pt)
     return result
 
+# tests ctr mode implmeented in ctr.py
 def c18():
     ct_before_nonce = b64.b64decode('L77na/nrFsKvynd6HzOoG7GHTLXsTVu9qvY/2syLXzhPweyyMTJULu/6/kXX0KSvoOLSFQ==')
     ct = bytes(16) + ct_before_nonce
@@ -80,3 +81,29 @@ def c18():
     pt = ctr.ctr_decrypt(ct, key, endian='little')
     return pt
 
+def score_single_character(c):
+    alpha = b'abcdefghijklmnopqrstuvwxyz '
+    alpha += alpha.upper()
+    if c in alpha:
+        return 1
+    return 0
+
+# breaks fixed nonce ctr mode encrypted files found in c19.txt
+# I phyiscally looked at each ciphertext and guessed each character using the parts of words
+# that were currently known, so this is unfeasible for large texts
+def c19():
+    key = os.urandom(16)
+    with open('c19.txt','r') as f:
+        lines = [ctr.ctr_encrypt(b64.b64decode(l.strip()), key, nonce=bytes(8))[16:] for l in f]
+        
+    # we essentially just need to break many time pad
+    longest = max(lines, key=len) # this line is tricky to decrypt fully
+    pairwise_xored = [xor_strings(l, longest) for l in lines]
+
+    result = b''
+    # use big homosapian brain to guess each letter one at a time
+    for i,l in enumerate(pairwise_xored):
+        guess = b'He, too, has been changed in his turn,' # vary the guess to get each char
+        pt = xor_strings(guess, l)
+        result += pt + b' \n'
+    return str(result, 'utf-8')

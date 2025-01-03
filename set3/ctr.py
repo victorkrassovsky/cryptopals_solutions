@@ -16,7 +16,8 @@ def array_to_string(arr):
 #takes a byte string, 16 byte key and an optional nonce, and encrypts using aes128 ctr mode
 #returns a string of bytes corresponding to the cipher text
 def ctr_encrypt(pt, key, nonce=os.urandom(8), endian='big'):
-    ct_array = None*(len(pt)/8)
+    pt_array = [pt[i:i+16] for i in range(0, len(pt), 16)]
+    ct_array = [bytes(16)]*len(pt_array)
     for i in range(0,len(pt_array)):
         counter = i.to_bytes(8,endian)
         block = aes128.encrypt(nonce + counter,key)
