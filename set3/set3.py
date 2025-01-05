@@ -81,13 +81,6 @@ def c18():
     pt = ctr.ctr_decrypt(ct, key, endian='little')
     return pt
 
-def score_single_character(c):
-    alpha = b'abcdefghijklmnopqrstuvwxyz '
-    alpha += alpha.upper()
-    if c in alpha:
-        return 1
-    return 0
-
 # breaks fixed nonce ctr mode encrypted files found in c19.txt
 # I phyiscally looked at each ciphertext and guessed each character using the parts of words
 # that were currently known, so this is unfeasible for large texts
@@ -107,3 +100,19 @@ def c19():
         pt = xor_strings(guess, l)
         result += pt + b' \n'
     return str(result, 'utf-8')
+
+def score_single_character(c):
+    alpha = b'abcdefghijklmnopqrstuvwxyz '
+    alpha += alpha.upper()
+    if c in alpha:
+        return 1
+    return 0
+
+# breaks fixed nonce ctr mode encrypted files found in c20.txt
+# now we use an automated method
+def c20():
+    key = os.urandom(16)
+    with open('c20.txt', 'r') as f:
+        lines = [ctr.ctr_encrypt(b64.b64decode(l.strip()),key) for l in f]
+    
+        
