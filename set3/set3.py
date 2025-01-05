@@ -104,15 +104,40 @@ def c19():
 def score_single_character(c):
     alpha = b'abcdefghijklmnopqrstuvwxyz '
     alpha += alpha.upper()
-    if c in alpha:
+    if c in good_chars:
         return 1
     return 0
 
+def score_byte_file(byte_file):
+    total = 0
+    for c in byte_file:
+        total += score_single_character(c)
+    return total
+
+def find_best(byte_file):
+    best_score,best_i,best_s = -1,-1, b''
+    for i in range(256):
+        s = xor_strings(byte_file, i.to_bytes(1,'big') * len(byte_file))
+        score = score_byte_file(s)
+        if score > best_score:
+            best_i,best_score,best_s = i,score,s
+    return best_i
+        
 # breaks fixed nonce ctr mode encrypted files found in c20.txt
-# now we use an automated method
+# now we use an automated method, it does not decrypt the entire text, but the large majority of it
 def c20():
     key = os.urandom(16)
     with open('c20.txt', 'r') as f:
-        lines = [ctr.ctr_encrypt(b64.b64decode(l.strip()),key) for l in f]
+        lines = [ctr.ctr_encrypt(b64.b64decode(l.strip()),key, nonce=bytes(8))[16:] for l in f]
     
-        
+    shortest_length = len(min(lines, key=len))
+    truncated = [l[:shortest_length] for l in lines]
+    transposed = [bytes([truncated[j][i] for j in range(len(truncated))]) for i in range(len(truncated[0]))]
+    solved = [find_best(l) for l in transposed]
+    xor_key = bytes(solved)
+    result = b''
+    for l in lines:
+        s = xor_strings(xor_key, l)
+        print(s)
+        result += s + b' \n'
+    return result
