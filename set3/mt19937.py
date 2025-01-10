@@ -1,3 +1,5 @@
+# Mersenne Twister PRNG
+# For education purposes, should NOT be used for crypto
 class Mt19937:
     def __init__(self, seed):
         n = 624

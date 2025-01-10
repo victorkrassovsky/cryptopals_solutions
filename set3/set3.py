@@ -3,6 +3,8 @@ import ctr
 import os
 import base64 as b64
 import random
+import time
+import mt19937
 
 # provides a random ciphertext encrypted with a random key
 def ciphertext_generator():
@@ -141,3 +143,16 @@ def c20():
         print(s)
         result += s + b' \n'
     return result
+
+# tests the prng found in mt19937.py
+def c21():
+    gen1 = mt19937.Mt19937(1)
+    gen2 = mt19937.Mt19937(1)
+    try:
+        for i in range(100):
+            assert(gen1.random_32bits() == gen2.random_32bits())
+    except:
+        print("Test failed)
+    else:
+        print("Tests succeeded")
+    
