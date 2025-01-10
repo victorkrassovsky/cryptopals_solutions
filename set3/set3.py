@@ -152,7 +152,7 @@ def c21():
         for i in range(100):
             assert(gen1.random_32bits() == gen2.random_32bits())
     except:
-        print("Test failed)
+        print("Test failed")
     else:
         print("Tests succeeded")
     
