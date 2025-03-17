@@ -156,3 +156,6 @@ def c21():
     else:
         print("Tests succeeded")
     
+# I am going to skip c22-24, since I don't think they are actually related to crypto
+# (since the mersenne twister isn't even used in crypto at all)
+# and I don't know how to test my mt19937 implementation
